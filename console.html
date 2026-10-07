@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Retro Route - Server Console</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    *::-webkit-scrollbar { display: none; }
+    
+    body {
+      font-family: 'Share Tech Mono', monospace, 'Courier New';
+      background-color: #111111;
+      color: #F7F4EE;
+      height: 100vh;
+      overflow: hidden;
+    }
+    
+    .container {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      padding: 20px;
+    }
+    
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 20px;
+      background: #1A1A1A;
+      border: 3px solid #D95D39;
+      margin-bottom: 20px;
+    }
+    
+    .title {
+      font-size: 24px;
+      font-weight: bold;
+      color: #D95D39;
+      letter-spacing: 2px;
+    }
+    
+    .status-indicator {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .status-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #4CAF50;
+      border: 2px solid #D95D39;
+      animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    
+    .status-text {
+      font-size: 12px;
+      color: #F7F4EE;
+    }
+    
+    .main-content {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      flex: 1;
+      min-height: 0;
+    }
+    
+    .panel {
+      background: #1A1A1A;
+      border: 3px solid #D95D39;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+    
+    .panel-header {
+      background: #D95D39;
+      padding: 12px 15px;
+      font-size: 14px;
+      font-weight: bold;
+      color: #111111;
+      letter-spacing: 1px;
+      flex-shrink: 0;
+    }
+    
+    .panel-content {
+      padding: 15px;
+      flex: 1;
+      overflow-y: auto;
+      min-height: 0;
+    }
+    
+    .panel-content::-webkit-scrollbar {
+      width: 6px;
+    }
+    
+    .panel-content::-webkit-scrollbar-track {
+      background: #222;
+    }
+    
+    .panel-content::-webkit-scrollbar-thumb {
+      background: #D95D39;
+    }
+    
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid #333;
+    }
+    
+    .info-row:last-child {
+      border-bottom: none;
+    }
+    
+    .info-label {
+      font-size: 11px;
+      color: #999;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    
+    .info-value {
+      font-size: 14px;
+      color: #F7F4EE;
+      font-weight: bold;
+    }
+    
+    .info-value.highlight {
+      color: #D95D39;
+    }
+    
+    .section-title {
+      font-size: 11px;
+      color: #999;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin: 15px 0 10px 0;
+      padding-top: 15px;
+      border-top: 1px solid #333;
+    }
+    
+    .section-title:first-child {
+      margin-top: 0;
+      padding-top: 0;
+      border-top: none;
+    }
+    
+    .ip-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    
+    .ip-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #222222;
+      padding: 10px 12px;
+      border: 2px solid #333;
+    }
+    
+    .ip-address {
+      font-size: 14px;
+      color: #D95D39;
+      font-weight: bold;
+    }
+    
+    .copy-btn {
+      background: transparent;
+      border: 2px solid #D95D39;
+      color: #D95D39;
+      padding: 5px 10px;
+      font-family: inherit;
+      font-size: 10px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .copy-btn:hover {
+      background: #D95D39;
+      color: #111111;
+    }
+    
+    .copy-btn.copied {
+      background: #4CAF50;
+      border-color: #4CAF50;
+      color: #111111;
+    }
+    
+    .action-btn {
+      background: #222222;
+      border: 3px solid #D95D39;
+      color: #F7F4EE;
+      padding: 12px 15px;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+      width: 100%;
+      margin-top: 15px;
+    }
+    
+    .action-btn:hover {
+      background: #D95D39;
+      color: #111111;
+    }
+    
+    .log-container {
+      background: #111111;
+      border: 2px solid #333;
+      padding: 10px;
+      height: 100%;
+      overflow-y: auto;
+      font-size: 11px;
+      line-height: 1.8;
+    }
+    
+    .log-container::-webkit-scrollbar {
+      width: 6px;
+    }
+    
+    .log-container::-webkit-scrollbar-track {
+      background: #111;
+    }
+    
+    .log-container::-webkit-scrollbar-thumb {
+      background: #D95D39;
+    }
+    
+    .log-entry {
+      color: #999;
+    }
+    
+    .log-entry.success {
+      color: #4CAF50;
+    }
+    
+    .log-entry.error {
+      color: #F44336;
+    }
+    
+    .log-entry.info {
+      color: #2196F3;
+    }
+    
+    .footer {
+      margin-top: 20px;
+      text-align: center;
+      font-size: 10px;
+      color: #666;
+      flex-shrink: 0;
+    }
+    
+    .scanline {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 10px;
+      background: rgba(217, 93, 57, 0.1);
+      opacity: 0.5;
+      animation: scanline 6s linear infinite;
+      pointer-events: none;
+      z-index: 100;
+    }
+    
+    @keyframes scanline {
+      0% { transform: translateY(-100%); }
+      100% { transform: translateY(100vh); }
+    }
+  </style>
+</head>
+<body>
+  <div class="scanline"></div>
+  
+  <div class="container">
+    <div class="header">
+      <div class="title">RETRO ROUTE</div>
+      <div class="status-indicator">
+        <span class="status-text">SERVER ACTIVE</span>
+        <div class="status-dot"></div>
+      </div>
+    </div>
+    
+    <div class="main-content">
+      <div class="panel">
+        <div class="panel-header">SERVER INFO</div>
+        <div class="panel-content">
+          <div class="info-row">
+            <span class="info-label">Flask Port</span>
+            <span class="info-value highlight" id="flaskPort">5001</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Database</span>
+            <span class="info-value" id="dbStatus">Connected</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Tasks Stored</span>
+            <span class="info-value highlight" id="taskCount">0</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Uptime</span>
+            <span class="info-value" id="uptime">00:00:00</span>
+          </div>
+          
+          <div class="section-title">AVAILABLE IP ADDRESSES</div>
+          <div class="ip-list" id="ipList">
+            <div class="ip-item">
+              <span class="ip-address">Loading...</span>
+            </div>
+          </div>
+          
+          <button class="action-btn" onclick="openBrowser()">OPEN IN BROWSER</button>
+        </div>
+      </div>
+      
+      <div class="panel">
+        <div class="panel-header">SERVER LOG</div>
+        <div class="panel-content" style="padding: 0;">
+          <div class="log-container" id="logContainer">
+            <div class="log-entry info">[INFO] Server started on port 5001</div>
+            <div class="log-entry success">[OK] Database connected</div>
+            <div class="log-entry info">[INFO] Waiting for connections...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="footer">
+      RETRO ROUTE SERVER CONSOLE v1.0 | Keep this window open to maintain server
+    </div>
+  </div>
+  
+  <script>
+    // 获取本机IP地址
+    async function fetchIPs() {
+      try {
+        const response = await fetch('/api/ip');
+        const data = await response.json();
+        const ipList = document.getElementById('ipList');
+        ipList.innerHTML = '';
+        
+        data.ips.forEach(ip => {
+          const item = document.createElement('div');
+          item.className = 'ip-item';
+          item.innerHTML = `
+            <span class="ip-address">${ip}:5001</span>
+            <button class="copy-btn" onclick="copyIP('${ip}', this)">COPY</button>
+          `;
+          ipList.appendChild(item);
+        });
+      } catch (e) {
+        console.error('Failed to fetch IPs:', e);
+      }
+    }
+    
+    // 获取任务数量
+    async function fetchTaskCount() {
+      try {
+        const response = await fetch('/api/tasks');
+        const data = await response.json();
+        document.getElementById('taskCount').textContent = data.length;
+      } catch (e) {
+        console.error('Failed to fetch tasks:', e);
+      }
+    }
+    
+    // 复制IP地址
+    function copyIP(ip, btn) {
+      const url = `http://${ip}:5001`;
+      navigator.clipboard.writeText(url).then(() => {
+        btn.textContent = 'COPIED!';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.textContent = 'COPY';
+          btn.classList.remove('copied');
+        }, 2000);
+        addLog(`[OK] Copied: ${url}`, 'success');
+      });
+    }
+    
+    // 打开浏览器
+    function openBrowser() {
+      addLog('[INFO] Opening browser...', 'info');
+      if (window.pywebview && window.pywebview.api) {
+        window.pywebview.api.open_browser();
+      } else {
+        window.open('http://localhost:5173', '_blank');
+      }
+    }
+    
+    // 添加日志
+    function addLog(message, type = '') {
+      const logContainer = document.getElementById('logContainer');
+      const entry = document.createElement('div');
+      entry.className = `log-entry ${type}`;
+      const time = new Date().toLocaleTimeString();
+      entry.textContent = `[${time}] ${message}`;
+      logContainer.appendChild(entry);
+      logContainer.scrollTop = logContainer.scrollHeight;
+    }
+    
+    // 更新运行时间
+    let startTime = Date.now();
+    function updateUptime() {
+      const elapsed = Date.now() - startTime;
+      const hours = Math.floor(elapsed / 3600000).toString().padStart(2, '0');
+      const minutes = Math.floor((elapsed % 3600000) / 60000).toString().padStart(2, '0');
+      const seconds = Math.floor((elapsed % 60000) / 1000).toString().padStart(2, '0');
+      document.getElementById('uptime').textContent = `${hours}:${minutes}:${seconds}`;
+    }
+    
+    // 初始化
+    document.addEventListener('DOMContentLoaded', () => {
+      fetchIPs();
+      fetchTaskCount();
+      setInterval(updateUptime, 1000);
+      setInterval(fetchTaskCount, 30000);
+    });
+    
+    window.addEventListener('pywebviewready', () => {
+      addLog('[INFO] Webview ready', 'info');
+    });
+  </script>
+</body>
+</html>
